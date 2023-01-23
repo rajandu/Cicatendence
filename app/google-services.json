@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "222252404617",
+    "project_id": "cicattendence",
+    "storage_bucket": "cicattendence.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:222252404617:android:1addba392bb9f9e5f2db58",
+        "android_client_info": {
+          "package_name": "com.cicattendance"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "222252404617-u3kpebek189sppt7daklr76p1slpliav.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAz4pM8dOqIMefr1MZXWgGalefrZk7ksUE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "222252404617-u3kpebek189sppt7daklr76p1slpliav.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
