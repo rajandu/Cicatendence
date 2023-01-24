@@ -1,7 +1,6 @@
 package com.cicattendance;
 
 import android.app.Dialog;
-import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -18,17 +17,20 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -42,11 +44,11 @@ public class Attendance extends Fragment {
     private FirebaseFirestore db;
     private CollectionReference groupRef ;
     private GroupAdapter adapter;
+    private ArrayList<GroupModel> groupModelArrayList;
+    private RecyclerView recyclerView;
     
     private FloatingActionButton addGroupFlb;
     TextView textView;
-
-    LinearLayoutManager linearLayoutManager;
 
     FirebaseAuth mAuth;
     View view;
@@ -63,13 +65,58 @@ public class Attendance extends Fragment {
         view = inflater.inflate(R.layout.fragment_attendance, container, false);
         addGroupFlb = view.findViewById(R.id.addGroupflb);
         textView = view.findViewById(R.id.textView3);
+        recyclerView = view.findViewById(R.id.group_recyclerView);
 
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
-        groupRef = db.collection("USERS").document(mAuth.getCurrentUser().getUid()).collection("GROUP");
+        groupRef = db.collection("USERS").document(mAuth.getCurrentUser().getUid())
+                .collection("GROUP");
 
-        setUpRecyclerView();
+        groupModelArrayList = new ArrayList<>();
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        adapter =new GroupAdapter(groupModelArrayList, getContext());
+        recyclerView.setAdapter(adapter);
 
+        groupRef.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                            @Override
+                            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+
+                                if (!queryDocumentSnapshots.isEmpty()) {
+                                List<DocumentSnapshot> list = queryDocumentSnapshots.getDocuments();
+                                for (DocumentSnapshot d : list) {
+                                    // after getting this list we are passing
+                                    // that list to our object class.
+                                    GroupModel groupModel = d.toObject(GroupModel.class);
+
+                                    // and we will pass this object class
+                                    // inside our arraylist which we have
+                                    // created for recycler view.
+                                    groupModelArrayList.add(groupModel);
+                                }
+                                // after adding the data to recycler view.
+                                // we are calling recycler view notifyDataSetChanged
+                                // method to notify that data has been changed in recycler view.
+                                adapter.notifyDataSetChanged();
+                            } else {
+                                // if the snapshot is empty we are displaying a toast message.
+                                Toast.makeText(getContext(), "No data found in Database",
+                                        Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+
+                        // if we do not get any data or any error we are displaying
+                        // a toast message that we do not get any data
+                        Toast.makeText(getContext(), "Fail to get the data.",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+
+        //Floating action button to add the Group
         addGroupFlb.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -80,53 +127,13 @@ public class Attendance extends Fragment {
         return view;
     }
 
-    private void setUpRecyclerView() {
 
-        Query query = groupRef.orderBy("group_name", Query.Direction.ASCENDING);
-        FirestoreRecyclerOptions<GroupModel> options = new FirestoreRecyclerOptions.Builder<GroupModel>()
-                .setQuery(query, GroupModel.class)
-                .build();
-
-        adapter = new GroupAdapter(options);
-
-        RecyclerView recyclerView = view.findViewById(R.id.group_recyclerView);
-        recyclerView.setHasFixedSize(true);
-        linearLayoutManager = new LinearLayoutManager(getContext(),RecyclerView.VERTICAL,false);
-        recyclerView.setLayoutManager(linearLayoutManager);
-        recyclerView.setAdapter(adapter);
-
-        adapter.setOnItemCliqListener(new GroupAdapter.OnItemCliqListener() {
-            @Override
-            public void onItemCliq(DocumentSnapshot documentSnapshot, int position) {
-
-                GroupModel groupAdapter = documentSnapshot.toObject(GroupModel.class);
-                String id = documentSnapshot.getId();
-
-                Intent intent = new Intent(getActivity().getApplicationContext(),Datess.class);
-                intent.putExtra("group_uid",id);
-                startActivity(intent);
-            }
-        });
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        adapter.startListening();
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        adapter.stopListening();
-
-    }
-
-
+    // Invoked when floating action button (Add Group) is clicked
     void showCustomDialog(){
         final Dialog dialog =new Dialog(getActivity());
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
         dialog.setCancelable(true);
         dialog.setContentView(R.layout.activity_add_group);
         Button addGroupbutton = dialog.findViewById(R.id.addGroupButton);
@@ -134,23 +141,24 @@ public class Attendance extends Fragment {
 
         dialog.show();
 
-
-
+        // Query for adding group to the firestore
          addGroupbutton.setOnClickListener(new View.OnClickListener() {
              @Override
              public void onClick(View v) {
 
                  Map<String , String> groups = new HashMap<>();
                  groups.put("group_name",addGroupET.getText().toString().trim());
-                 groups.put("group_owner",mAuth.getCurrentUser().getEmail().toString().trim());
-
-
-                 db.collection("USERS").document(mAuth.getCurrentUser().getUid()).collection("GROUP").document(addGroupET.getText().toString().trim().toUpperCase()).set(groups)
+                 
+                 db.collection("USERS").document(mAuth.getCurrentUser().getUid())
+                         .collection("GROUP")
+                         .document(addGroupET.getText().toString().trim().toUpperCase())
+                         .set(groups)
                          .addOnCompleteListener(new OnCompleteListener<Void>() {
                              @Override
                              public void onComplete(@NonNull Task<Void> task) {
                                 if(task.isSuccessful()){
-                                    Toast.makeText(getActivity().getApplicationContext(), addGroupET.getText().toString().trim()+" Added Successfully",Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getActivity().getApplicationContext(),
+                                            addGroupET.getText().toString().trim()+" Added Successfully",Toast.LENGTH_SHORT).show();
                                 }else{
                                     Toast.makeText(getActivity().getApplicationContext(),"Group Not Added", Toast.LENGTH_SHORT).show();
                                 }

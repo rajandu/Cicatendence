@@ -2,8 +2,10 @@ package com.cicattendance;
 
 public class studentModel {
 
+    String name;
+
     public String getName() {
-        return name;
+        return this.name;
     }
 
     public void setName(String name) {
@@ -14,6 +16,6 @@ public class studentModel {
         this.name = name;
     }
 
-    String name;
+
 
 }

@@ -1,5 +1,6 @@
 package com.cicattendance;
 
+import android.content.Context;
 import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,36 +13,44 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 
+import java.util.ArrayList;
 
-public class studentAdapter extends FirestoreRecyclerAdapter<studentModel, studentAdapter.studentHolder> {
 
+public class studentAdapter extends RecyclerView.Adapter<studentAdapter.ViewHolder> {
 
-    public studentAdapter(@NonNull FirestoreRecyclerOptions<studentModel> options) {
-        super(options);
+    private ArrayList<studentModel> studentModelArrayList;
+    private Context context;
+
+    public studentAdapter(ArrayList<studentModel> studentModelArrayList, Context context){
+        this.studentModelArrayList =  studentModelArrayList;
+        this.context = context;
     }
-
-    @Override
-    protected void onBindViewHolder(@NonNull studentHolder holder, int position, @NonNull studentModel model) {
-        holder.studentTv.setText(model.getName());
-    }
-
     @NonNull
     @Override
-    public studentHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.student,parent,false);
-        return new studentHolder(v);
+    public studentAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        return new ViewHolder(LayoutInflater.from(context).inflate(R.layout.student,parent,false));
     }
 
-    class studentHolder extends RecyclerView.ViewHolder{
+    @Override
+    public void onBindViewHolder(@NonNull studentAdapter.ViewHolder holder, int position) {
 
-        TextView studentTv ;
+        studentModel studentModel = studentModelArrayList.get(position);
+        holder.student_name.setText(studentModel.getName());
+    }
 
-        public studentHolder(@NonNull View itemView) {
+    @Override
+    public int getItemCount() {
+        return studentModelArrayList.size();
+    }
+
+    class ViewHolder extends RecyclerView.ViewHolder{
+         TextView student_name;
+
+        public ViewHolder(@NonNull View itemView) {
             super(itemView);
-
-             studentTv = itemView.findViewById(R.id.studentTV);
+            student_name = itemView.findViewById(R.id.studentTV);
         }
     }
+
 
 }
