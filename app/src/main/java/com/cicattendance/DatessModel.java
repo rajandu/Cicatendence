@@ -2,18 +2,27 @@ package com.cicattendance;
 
 public class DatessModel {
 
-    public DatessModel(String datess) {
-        this.datess = datess;
+    public DatessModel(String date) {
+        this.date = date;
     }
 
-    String datess;
+    String date ;
 
-    public String getDatess() {
-        return datess;
+    public String getDate() {
+        return date;
     }
 
-    public void setDatess(String datess) {
-        this.datess = datess;
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public DatessModel(){
+
+    }
+
+    @Override
+    public String toString() {
+        return date;
     }
 
 

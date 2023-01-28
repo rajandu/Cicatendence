@@ -5,6 +5,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
+import android.widget.Toast;
 
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.firebase.auth.FirebaseAuth;
@@ -29,7 +30,9 @@ public class FinalAttendence extends AppCompatActivity {
         String date_uid = getIntent().getStringExtra("date_uid");
         String group_id = getIntent().getStringExtra("group_uid");
 
-        studentRef = db.collection("USERS").document(mAuth.getCurrentUser().getUid()).collection("GROUP").document(group_id).collection("DATES").document(date_uid).collection("ATTENDENCE");
+
+        studentRef = db.collection("USERS").document(mAuth.getCurrentUser().getUid()).collection("GROUP")
+                .document(group_id).collection("DATES").document(date_uid).collection("ATTENDENCE");
         setUpRecyclerView();
     }
 
@@ -54,9 +57,4 @@ public class FinalAttendence extends AppCompatActivity {
         adapter.startListening();
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        adapter.stopListening();
-    }
 }

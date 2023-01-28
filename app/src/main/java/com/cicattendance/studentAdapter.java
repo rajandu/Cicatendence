@@ -1,6 +1,5 @@
 package com.cicattendance;
 
-import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,7 +21,7 @@ public class studentAdapter extends FirestoreRecyclerAdapter<studentModel, stude
 
     @Override
     protected void onBindViewHolder(@NonNull studentHolder holder, int position, @NonNull studentModel model) {
-        holder.studentTv.setText(model.getName());
+        holder.studentTv.setText(model.student_name);
     }
 
     @NonNull

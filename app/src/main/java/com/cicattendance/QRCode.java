@@ -1,9 +1,7 @@
 package com.cicattendance;
 
-import android.Manifest;
-import android.app.Dialog;
-import android.content.Intent;
-import android.content.pm.PackageManager;
+import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
+
 import android.graphics.Bitmap;
 import android.icu.text.SimpleDateFormat;
 import android.os.Build;
@@ -13,14 +11,13 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -29,6 +26,7 @@ import android.widget.Toast;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -38,27 +36,32 @@ import com.journeyapps.barcodescanner.BarcodeEncoder;
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Locale;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class QRCode extends Fragment {
 
     View view;
-    Button generteQrCode, scanQrCode;
-    ImageView imageViewQrCode;
-    Spinner spinner;
-    String selectedGroupFromSpinner;
+    Button generteQrCode, scanQrCode; // buttons to generate and scan qr code
+    ImageView imageViewQrCode;  // Image view to show the qr code to be scanned
+    Spinner spinner; // spinner
     FirebaseFirestore firebaseFirestore;
     FirebaseAuth mAuth;
-    public static GroupAdapter groupAdapter;
-    String QrScanResult, date;
+    String QrScanResult, date;  // result after scanning qr code , todays date
+    String qrStringGenerate, qrStringGenerateFinal, current_user_uid, current_user_full_name;
     Calendar calendar;
     private SimpleDateFormat dateFormat;
+    TextView dateTimedisplay;
+
+    textEnc enc = new textEnc();
 
     public QRCode() {
-        // Required empty public constructor
     }
 
 
@@ -73,6 +76,14 @@ public class QRCode extends Fragment {
         imageViewQrCode = view.findViewById(R.id.qrCodeImageView);
         spinner = view.findViewById(R.id.spinner);
 
+        //testing purpose
+        dateTimedisplay = view.findViewById(R.id.dataTimeDisplay);
+        try {
+            dateTimedisplay.setText(enc.decrypt("[B@48bc0e"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         calendar = Calendar.getInstance();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             dateFormat = new SimpleDateFormat("MM-dd-yyyy");
@@ -85,12 +96,14 @@ public class QRCode extends Fragment {
         firebaseFirestore = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
 
-        String userEmail = mAuth.getCurrentUser().getEmail().toString();
+        current_user_uid = mAuth.getCurrentUser().getUid();
 
+
+        // Spinner to display All the groups
         ArrayList<String> groupNameArrayList =new ArrayList<String>();
         groupNameArrayList.add("--Please select the group");
 
-        firebaseFirestore.collection("USERS").document(mAuth.getCurrentUser().getUid()).collection("GROUP").orderBy("group_name").get()
+        firebaseFirestore.collection("USERS").document(current_user_uid).collection("GROUP").orderBy("group_name").get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
@@ -114,7 +127,12 @@ public class QRCode extends Fragment {
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-               selectedGroupFromSpinner  = parent.getItemAtPosition(position).toString();
+
+                qrStringGenerate = "{" +
+                        "\"user_id\":\""  +mAuth.getCurrentUser().getUid()         +"\","+
+                        "\"group\":\""    +groupNameArrayList.get(position)        +"\","+
+                        "\"date\":\""     +date                                    +"\""+
+                        "}";
             }
 
             @Override
@@ -131,7 +149,7 @@ public class QRCode extends Fragment {
 
                 try {
                     BarcodeEncoder barcodeEncoder = new BarcodeEncoder();
-                    Bitmap bitmap = barcodeEncoder.encodeBitmap(selectedGroupFromSpinner+mAuth.getCurrentUser().getUid().toString(), BarcodeFormat.QR_CODE, 400, 400);
+                    Bitmap bitmap = barcodeEncoder.encodeBitmap(qrStringGenerate, BarcodeFormat.QR_CODE, 400, 400);
                     imageViewQrCode.setImageBitmap(bitmap);
                 } catch(Exception e) {
 
@@ -143,7 +161,6 @@ public class QRCode extends Fragment {
         scanQrCode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 ScanOptions options = new ScanOptions();
                 options.setPrompt("Scan a barcode");
                 options.setCameraId(0);  // Use a specific camera of the device
@@ -163,15 +180,54 @@ public class QRCode extends Fragment {
                 if(result.getContents() == null) {
                     Toast.makeText(getActivity().getApplicationContext(), "Cancelled", Toast.LENGTH_LONG).show();
                 } else {
-                    QrScanResult = result.getContents().toString();
+                    QrScanResult = result.getContents();
+                    try {
+                        pushDataToFirebase(QrScanResult);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
 
 
                 }
             });
 
+    private void pushDataToFirebase(String qrScanResult) throws JSONException {
+        JSONObject obj = new JSONObject(QrScanResult);
+
+        String user_id_qr=obj.getString("user_id"), group_qr = obj.getString("group"), date_qr=obj.getString("date");
+
+        firebaseFirestore.collection("USERS").document(current_user_uid).get()
+                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                        if (task.isSuccessful()){
+                            DocumentSnapshot document = task.getResult();
+                            current_user_full_name = document.get("fullname").toString();
+
+                            Map<String , String> groups = new HashMap<>();
+                            groups.put("student_name",current_user_full_name);
 
 
+                            firebaseFirestore.collection("USERS").document(user_id_qr).collection("GROUP").document(group_qr.trim().toUpperCase())
+                                    .collection("DATES").document(date_qr).collection("ATTENDENCE").add(groups)
+                                    .addOnCompleteListener(new OnCompleteListener<DocumentReference>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<DocumentReference> task) {
+                                            if(task.isSuccessful()){
+                                                Toast.makeText(getActivity().getApplicationContext(), " Attendance Recorded ",Toast.LENGTH_SHORT).show();
+                                            }else{
+                                                Toast.makeText(getActivity().getApplicationContext(),"Attendance Not Recorded", Toast.LENGTH_SHORT).show();
+                                            }
+                                        }
+                                    });
 
+                        }else{
+                            Log.d(TAG, "get failed with ", task.getException());
+                        }
+
+                    }
+                });
+    }
 }
 
 

@@ -34,8 +34,9 @@ public class Datess extends AppCompatActivity {
     private FirebaseFirestore db;
     private CollectionReference groupRef ;
     private DatessAdapter adapter;
-    FirebaseAuth mAuth;
-    String group_name;
+    private FirebaseAuth mAuth;
+
+
 
 
     @Override
@@ -47,18 +48,15 @@ public class Datess extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         String group_id = getIntent().getStringExtra("group_uid");
 
-        groupRef = db.collection("USERS").document(mAuth.getCurrentUser().getUid()).collection("GROUP").document(group_id).collection("DATES");
+        groupRef = db.collection("USERS").document(mAuth.getCurrentUser().getUid())
+                        .collection("GROUP").document(group_id.trim()).collection("DATES");
 
-        mAuth = FirebaseAuth.getInstance();
-
-        setUpRecyclerView();
-
-
+        setUpRecyclerView(group_id);
     }
 
-    private void setUpRecyclerView() {
+    private void setUpRecyclerView(String group_id) {
 
-        Query query = groupRef.orderBy("dates", Query.Direction.ASCENDING);
+        Query query = groupRef.orderBy("date", Query.Direction.ASCENDING);
         FirestoreRecyclerOptions<DatessModel> options = new FirestoreRecyclerOptions.Builder<DatessModel>()
                 .setQuery(query, DatessModel.class)
                 .build();
@@ -67,19 +65,18 @@ public class Datess extends AppCompatActivity {
 
         RecyclerView recyclerView = findViewById(R.id.datesRecyclerView);
         recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(new LinearLayoutManager(Datess.this));
+        recyclerView.setLayoutManager(new LinearLayoutManager(Datess.this, RecyclerView.VERTICAL,false));
         recyclerView.setAdapter(adapter);
 
         adapter.setOnItemCliqListener(new DatessAdapter.OnItemCliqListener() {
             @Override
             public void onItemCliq(DocumentSnapshot documentSnapshot, int position) {
 
-                DatessModel groupAdapter = documentSnapshot.toObject(DatessModel.class);
                 String id = documentSnapshot.getId();
                 Intent intent=new Intent(Datess.this,FinalAttendence.class);
                 intent.putExtra("date_uid",id);
+                intent.putExtra("group_uid",group_id);
                 startActivity(intent);
-
             }
         });
     }
@@ -90,9 +87,4 @@ public class Datess extends AppCompatActivity {
         adapter.startListening();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        adapter.stopListening();
-    }
 }

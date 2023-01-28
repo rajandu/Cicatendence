@@ -115,13 +115,6 @@ public class Attendance extends Fragment {
         adapter.startListening();
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
-        adapter.stopListening();
-
-    }
-
 
     void showCustomDialog(){
         final Dialog dialog =new Dialog(getActivity());
@@ -142,7 +135,6 @@ public class Attendance extends Fragment {
 
                  Map<String , String> groups = new HashMap<>();
                  groups.put("group_name",addGroupET.getText().toString().trim());
-                 groups.put("group_owner",mAuth.getCurrentUser().getEmail().toString().trim());
 
 
                  db.collection("USERS").document(mAuth.getCurrentUser().getUid()).collection("GROUP").document(addGroupET.getText().toString().trim().toUpperCase()).set(groups)

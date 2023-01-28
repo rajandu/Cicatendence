@@ -1,12 +1,9 @@
 package com.cicattendance;
 
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
 import android.widget.TextView;
-
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -27,7 +24,7 @@ public class GroupAdapter extends FirestoreRecyclerAdapter<GroupModel,GroupAdapt
 
     @Override
     protected void onBindViewHolder(@NonNull GroupHolder holder, int position, @NonNull GroupModel model) {
-        holder.groupName_tv.setText(model.getGroupName());
+        holder.groupName_tv.setText(model.group_name);
     }
 
     @NonNull
@@ -69,71 +66,6 @@ public class GroupAdapter extends FirestoreRecyclerAdapter<GroupModel,GroupAdapt
     public void setOnItemCliqListener(OnItemCliqListener listener){
         this.listener = listener;
     }
-
-
-//    private static Context context;
-//    static List<GroupModel> groupModelList;
-//
-//    public GroupAdapter( List<GroupModel> groupModelList){
-//        this.groupModelList = groupModelList;
-//    }
-//
-//
-//    @NonNull
-//    @Override
-//    public GroupAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-//        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.group, parent, false);
-//        context = parent.getContext();
-//        return new ViewHolder(view);
-//    }
-//
-//    @Override
-//    public void onBindViewHolder(@NonNull GroupAdapter.ViewHolder holder, int position) {
-//
-//        GroupModel model = groupModelList.get(position);
-//        String groupName =  model.getGroupName();
-//        holder.setData(groupName);
-//
-//        return;
-//
-//    }
-//
-//
-//
-//    @Override
-//    public int getItemCount() {
-//        return groupModelList.size();
-//    }
-//
-//    public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
-//
-//        public TextView groupName_tv;
-//
-//        public ViewHolder(@NonNull View itemView) {
-//            super(itemView);
-//
-//            groupName_tv = itemView.findViewById(R.id.groupName);
-//            groupName_tv.setOnClickListener(this);
-//        }
-//
-//        @Override
-//        public void onClick(View view) {
-//            int position = this.getAdapterPosition();
-//            GroupModel groupModel = groupModelList.get(position);
-//            String groupName = groupModel.getGroupName();
-//
-//            Intent intent = new Intent(context, Datess.class);
-//            intent.putExtra("group_name", groupName);
-//            context.startActivity(intent);
-//
-//        }
-//        private void setData(String groupName){
-//
-//            groupName_tv.setText(groupName);
-//
-//        }
-//    }
-
 
 
 }
