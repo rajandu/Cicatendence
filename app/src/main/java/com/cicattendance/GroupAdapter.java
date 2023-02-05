@@ -35,6 +35,10 @@ public class GroupAdapter extends FirestoreRecyclerAdapter<GroupModel,GroupAdapt
         return new GroupHolder(view);
     }
 
+    public void deleteItem(int position){
+        getSnapshots().getSnapshot(position).getReference().delete();
+    }
+
     class GroupHolder extends RecyclerView.ViewHolder{
 
         TextView groupName_tv;
@@ -63,9 +67,9 @@ public class GroupAdapter extends FirestoreRecyclerAdapter<GroupModel,GroupAdapt
         void onItemCliq(DocumentSnapshot documentSnapshot, int position);
     }
 
+
     public void setOnItemCliqListener(OnItemCliqListener listener){
         this.listener = listener;
     }
-
 
 }

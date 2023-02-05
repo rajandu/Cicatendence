@@ -1,11 +1,14 @@
 package com.cicattendance;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -95,11 +98,40 @@ public class Attendance extends Fragment {
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(adapter);
 
+        new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0,
+                ItemTouchHelper.LEFT ) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+
+                builder.setMessage("Do you want to Delete  ?");
+                builder.setTitle("Delete Group !");
+                builder.setCancelable(false);
+                builder.setPositiveButton("Yes", (DialogInterface.OnClickListener) (dialog, which) -> {
+                    adapter.deleteItem(viewHolder.getAbsoluteAdapterPosition());
+                    dialog.cancel();
+                });
+
+                builder.setNegativeButton("No", (DialogInterface.OnClickListener) (dialog, which) -> {
+                    adapter.notifyItemChanged(viewHolder.getAbsoluteAdapterPosition());
+                    dialog.cancel();
+                });
+
+                AlertDialog alertDialog = builder.create();
+                alertDialog.show();
+            }
+        }).attachToRecyclerView(recyclerView);
+
         adapter.setOnItemCliqListener(new GroupAdapter.OnItemCliqListener() {
             @Override
             public void onItemCliq(DocumentSnapshot documentSnapshot, int position) {
 
-                GroupModel groupAdapter = documentSnapshot.toObject(GroupModel.class);
                 String id = documentSnapshot.getId();
 
                 Intent intent = new Intent(getActivity().getApplicationContext(),Datess.class);
